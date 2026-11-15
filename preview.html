@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Превью карточки мультиварки</title>
+  <style>
+    :root {
+      --primary-color: #0b7a3b;
+      --text-primary-color: #fff;
+      --primary-text-color: #e8eaed;
+      --secondary-text-color: #9aa0a6;
+      --ha-card-background: #1c1c1e;
+      --secondary-background-color: #2a2a2d;
+      --divider-color: #3c4043;
+      --card-background-color: #1c1c1e;
+    }
+    body {
+      margin: 0; padding: 24px; background: #111214;
+      font-family: "Roboto", "Helvetica Neue", Arial, sans-serif;
+      color: var(--primary-text-color); display: flex; gap: 20px; flex-wrap: wrap;
+    }
+    .wrap { width: 380px; }
+    .cap { font-size: .8rem; color: var(--secondary-text-color); margin: 0 0 8px; }
+    ha-card { display: block; border-radius: 16px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="cap">Покой — программа не выбрана</p>
+    <polaris-cooker-card id="idle"></polaris-cooker-card>
+  </div>
+  <div class="wrap">
+    <p class="cap">Готовит — «Варка на пару», 86 °C, 5 мин (вода кипит)</p>
+    <polaris-cooker-card id="cook"></polaris-cooker-card>
+  </div>
+
+  <script src="polaris-cooker-card.js"></script>
+  <script>
+    const OPTIONS = ["Суп", "Молочная каша", "Холодец", "Плов", "Варка на пару", "Жарка", "Крупа", "Тушение", "Варенье", "Выпечка"];
+    const st = (state, attributes = {}) => ({ state, attributes, last_reported: new Date().toISOString() });
+    const entities = {
+      program: "select.demo_program",
+      start: "button.demo_start",
+      stop: "button.demo_stop",
+      temperature: "sensor.demo_temperature",
+      target_temperature: "number.demo_target_temperature",
+      timer: "number.demo_timer",
+      delay_start: "number.demo_delay_start",
+      keep_warm: "switch.demo_keep_warm",
+      child_lock: "switch.demo_child_lock",
+      error: "binary_sensor.demo_error",
+    };
+    const hass = (over = {}) => ({
+      states: {
+        "select.demo_program": st("unknown", { options: OPTIONS }),
+        "button.demo_start": st("unknown"),
+        "button.demo_stop": st("unknown"),
+        "sensor.demo_temperature": st("24.0"),
+        "number.demo_target_temperature": st("30.0", { min: 30, max: 160, step: 5 }),
+        "number.demo_timer": st("0.0", { min: 1, max: 720, step: 1 }),
+        "number.demo_delay_start": st("0.0", { min: 0, max: 1440, step: 10 }),
+        "switch.demo_keep_warm": st("on"),
+        "switch.demo_child_lock": st("off"),
+        "binary_sensor.demo_error": st("off"),
+        ...over,
+      },
+      callService: (d, s, data) => console.log("service", d, s, data),
+    });
+
+    const idle = document.getElementById("idle");
+    idle.setConfig({ name: "Мультиварка", entities });
+    idle.hass = hass();
+
+    const cook = document.getElementById("cook");
+    cook.setConfig({ name: "Мультиварка", entities });
+    cook.hass = hass({
+      "select.demo_program": st("Варка на пару", { options: OPTIONS }),
+      "sensor.demo_temperature": st("86.0"),
+      "number.demo_timer": st("5.0"),
+      "number.demo_target_temperature": st("100.0"),
+    });
+  </script>
+</body>
+</html>
